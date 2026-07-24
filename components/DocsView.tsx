@@ -8,6 +8,7 @@ import { MNEMONIC_DOCS } from "@/lib/editor-data";
 
 const CODEWIZARD_REPO = "https://github.com/Dnawrkshp/CodeWizardPS3";
 const PORTFOLIO = "https://mackcore.io";
+const REPO = "https://github.com/score3229/PPULab";
 
 type TabKey = "guide" | "reference" | "keybinds" | "api" | "planned" | "about";
 
@@ -503,6 +504,10 @@ function About() {
       <P>
         <a href={PORTFOLIO} target="_blank" rel="noreferrer" className="text-accent hover:underline">
           Portfolio →
+        </a>
+        <span className="mx-2 text-text-muted">·</span>
+        <a href={REPO} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+          Source on GitHub →
         </a>
       </P>
     </div>
