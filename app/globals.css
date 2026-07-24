@@ -1,0 +1,733 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* workstation theme, layered dark base with a bright blue accent */
+
+  /* backgrounds, shell darkest then panels then code */
+  --color-base-bg: #080b11;
+  --color-card-bg: #121a26;
+  --color-input-bg: #0b1018;
+  --color-surface: #0e141e;
+
+  /* borders */
+  --color-border: #273240;
+  --color-border-hover: #3a4a5e;
+
+  /* text */
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #8b98a6;
+  --color-text-muted: #5d6d7e;
+
+  /* accent, bright blue (white text on it) */
+  --color-accent: #2f81f7;
+  --color-accent-hover: #4493f8;
+
+  /* secondary buttons */
+  --color-btn-secondary: #1b2331;
+  --color-btn-secondary-border: #273240;
+  --color-btn-secondary-hover: #223047;
+
+  /* danger */
+  --color-danger-bg: #2A1219;
+  --color-danger-border: #4A1E2A;
+  --color-danger-hover: #3A1520;
+  --color-danger-text: #FF8A80;
+
+  /* status */
+  --color-error: #FF5370;
+  --color-success: #C3E88D;
+
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+}
+
+body {
+  margin: 0;
+  background: var(--color-base-bg);
+  color: var(--color-text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* respect the OS "reduce motion" setting: neutralize animations and transitions
+   (progress bar, error card, tab transitions, sliding underline, etc.) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* custom scrollbars */
+
+html,
+body,
+pre,
+div,
+.cm-scroller {
+  scrollbar-width: thin !important;
+  scrollbar-color: #273240 transparent !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+pre::-webkit-scrollbar,
+div::-webkit-scrollbar,
+.cm-scroller::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track,
+div::-webkit-scrollbar-track,
+.cm-scroller::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb,
+div::-webkit-scrollbar-thumb,
+.cm-scroller::-webkit-scrollbar-thumb {
+  background: #273240 !important;
+  border-radius: 4px !important;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+pre::-webkit-scrollbar-thumb:hover,
+div::-webkit-scrollbar-thumb:hover,
+.cm-scroller::-webkit-scrollbar-thumb:hover {
+  background: #3a4a5e !important;
+}
+
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner,
+pre::-webkit-scrollbar-corner,
+div::-webkit-scrollbar-corner,
+.cm-scroller::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* codemirror 6 editor */
+
+.cm6-host {
+  position: absolute;
+  inset: 0;
+}
+
+.cm6-host .cm-editor {
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cm6-host .cm-scroller {
+  background: var(--color-input-bg);
+}
+
+.cm6-host .cm-gutters {
+  background: var(--color-input-bg);
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.cm6-host .cm-activeLineGutter {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.cm6-host .cm-selectionBackground {
+  background: rgba(130, 170, 255, 0.20);
+}
+
+/* the exact offending token gets a red wavy underline (the linter signal) */
+.cm-errorTok {
+  text-decoration: underline wavy #ff5370;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
+}
+
+/* hover-a-squiggle tooltip, inside the shared hover card */
+.cm-err-tip {
+  padding: 6px 10px;
+  max-width: 360px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--color-danger-text);
+  border-left: 2px solid var(--color-error);
+}
+
+/* the error line's number turns red in the gutter, no overlap with the digits */
+.cm-errorGutter,
+.cm6-host .cm-errorGutter.cm-activeLineGutter {
+  color: #ff5370 !important;
+  font-weight: 700;
+}
+
+/* thin assemble progress bar, fixed to the top of the window */
+.tp-track {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.tp-track.on {
+  opacity: 1;
+  transition: opacity 80ms ease;
+}
+
+.tp-bar {
+  height: 100%;
+  width: 100%;
+  transform: scaleX(1);
+  transform-origin: left;
+  border-radius: 0 2px 2px 0;
+  background: var(--color-accent);
+  box-shadow: 0 0 8px rgba(47, 129, 247, 0.7);
+  /* animates the snap to full when the animation is removed (assemble done) */
+  transition: transform 220ms ease-out;
+}
+
+/* fill while assembling; on clear, the animation drops and transform reverts to
+   scaleX(1) (full), which the transition above eases into */
+.tp-track.on .tp-bar {
+  animation: tp-fill 3s cubic-bezier(0.1, 0.6, 0.2, 1) forwards;
+}
+
+@keyframes tp-fill {
+  0% {
+    transform: scaleX(0.08);
+  }
+  40% {
+    transform: scaleX(0.55);
+  }
+  100% {
+    transform: scaleX(0.9);
+  }
+}
+
+/* error card slides up */
+@keyframes err-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.err-in {
+  animation: err-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cm-editor .cm-activeLine {
+  background: rgba(130, 170, 255, 0.05);
+}
+
+.cm-editor .cm-activeLineGutter {
+  background: rgba(130, 170, 255, 0.08);
+  color: var(--color-text-secondary);
+}
+
+/* autocomplete dropdown */
+.cm-tooltip.cm-tooltip-autocomplete {
+  border: 1px solid var(--color-border-hover);
+  background: var(--color-card-bg);
+  border-radius: 10px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  padding: 4px;
+}
+
+.cm-tooltip-autocomplete > ul {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  max-height: 320px;
+}
+
+.cm-tooltip-autocomplete > ul > li {
+  padding: 5px 9px;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: rgba(100, 160, 255, 0.14);
+  box-shadow: inset 2px 0 0 var(--color-accent-hover);
+}
+
+/* fixed label column so the signatures line up */
+.cm-completionLabel {
+  color: var(--color-text-primary);
+  flex: 0 0 auto;
+  min-width: 9ch;
+}
+
+.cm-completionMatchedText {
+  color: #7cc0ff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+/* import file suggestions: give the row extra room and push the folder tag to
+   the right so tags line up in a column instead of trailing each file name */
+.cm-opt-file {
+  min-width: 18rem;
+  justify-content: space-between;
+}
+
+.cm-opt-file .cm-completionLabel {
+  flex: 0 1 auto;
+}
+
+.cm-opt-file .cm-completionDetail {
+  margin-left: auto;
+  padding-left: 24px;
+  color: #c1963f;
+}
+
+.cm-completionDetail {
+  flex: 0 0 auto;
+  padding-left: 10px;
+  color: var(--color-text-muted);
+  font-style: normal;
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+/* docs panel (autocomplete side info + hover) */
+.cm-tooltip.cm-completionInfo,
+.cm-tooltip.cm-tooltip-hover {
+  border: 1px solid var(--color-border-hover);
+  background: var(--color-card-bg);
+  border-radius: 10px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6);
+  padding: 0;
+  max-width: 440px;
+}
+
+.cm-doc {
+  padding: 10px 12px;
+}
+
+.cm-doc-title {
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.cm-doc-help {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.cm-doc-ex {
+  margin-top: 8px;
+  margin-bottom: 3px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* docs tab content switch, subtle rise + fade */
+@keyframes tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tab-in {
+  animation: tab-in 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* toast slides up */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.toast-in {
+  animation: toast-in 200ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* list items fade in on mount */
+@keyframes list-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.list-in {
+  animation: list-in 220ms ease-out both;
+}
+
+@keyframes splash-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.splash-in {
+  animation: splash-in 260ms ease-out both;
+}
+
+/* tactile press on all buttons */
+button {
+  transition: transform 90ms ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* stretch the shared editor to fill its pane. flex fill instead of height:100%
+   so it holds up when the ancestors get their height from flex */
+.ws-fill-editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ws-fill-editor > div {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+/* react flow chrome, dark themed to match the workstation */
+.react-flow__controls {
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+.react-flow__controls-button {
+  background: var(--color-card-bg) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--color-btn-secondary-hover) !important;
+}
+
+.react-flow__controls-button svg {
+  fill: var(--color-text-secondary) !important;
+  max-width: 12px !important;
+  max-height: 12px !important;
+}
+
+.react-flow__minimap {
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+}
+
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* graph node entrance, applied to the inner card (not the rf node wrapper,
+   which owns the positioning transform) */
+@keyframes cfg-node-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* gentle breathing glow on the entry block */
+@keyframes cfg-entry-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px #38bdf82e, 0 0 8px rgba(56, 189, 248, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 1px #38bdf85a, 0 0 16px rgba(56, 189, 248, 0.3);
+  }
+}
+
+/* --glow is set per node to its block color, so these halos match each block.
+   ease box-shadow so hover/select glows fade in instead of snapping */
+.cfg-block {
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+
+/* clicked / selected block: strong colored halo, lifted above neighbors */
+.react-flow__node.selected {
+  z-index: 10 !important;
+}
+
+.react-flow__node.selected .cfg-block {
+  border-color: var(--glow) !important;
+  box-shadow: 0 0 0 1.5px var(--glow), 0 0 36px 5px color-mix(in srgb, var(--glow) 52%, transparent) !important;
+}
+
+/* hover lift, only on non-selected blocks so it never downgrades the selection
+   halo. thicker ring (the part that reads nicely) with just a soft glow */
+.react-flow__node:not(.selected):hover .cfg-block {
+  box-shadow: 0 0 0 1.5px var(--glow), 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 13px color-mix(in srgb, var(--glow) 26%, transparent) !important;
+}
+
+/* edge emphasis on hover */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2.6 !important;
+}
+
+/* hidden scrollbar so it can't steal height (wheel scrolls the tabs) */
+.no-scrollbar {
+  scrollbar-width: none !important;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* tooltip fade, transform is positioning so animate opacity */
+.tip-pop {
+  animation: tip-fade 120ms ease-out both;
+}
+@keyframes tip-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* drag-and-drop import overlay */
+.drop-overlay {
+  animation: drop-fade 130ms ease both;
+}
+.drop-card {
+  animation: drop-pop 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(47, 129, 247, 0.22),
+    0 0 90px rgba(47, 129, 247, 0.13);
+}
+.drop-bob {
+  animation: drop-bob 1.8s ease-in-out infinite;
+}
+@keyframes drop-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes drop-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes drop-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* find / replace widget, floats top-right instead of pushing content down */
+.cm6-host .cm-panels.cm-panels-top {
+  position: absolute;
+  top: 0;
+  right: 14px;
+  left: auto;
+  z-index: 20;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* the widget itself: a find row stacked over a replace row */
+.cm6-host .cmv-find {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(440px, calc(100vw - 48px));
+  padding: 10px 42px 10px 10px;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border-hover);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.cm6-host .cmv-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* the find / replace text fields grow to fill their row */
+.cm6-host .cmv-input {
+  flex: 1 1 auto;
+  min-width: 80px;
+  padding: 4px 8px;
+  background: var(--color-input-bg);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  outline: none;
+}
+.cm6-host .cmv-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+.cm6-host .cmv-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* case / word / regex toggles as small square icon buttons */
+.cm6-host .cmv-toggles {
+  display: flex;
+  gap: 2px;
+}
+.cm6-host .cmv-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.cm6-host .cmv-toggle:hover {
+  background: var(--color-btn-secondary-hover);
+  color: var(--color-text-primary);
+}
+.cm6-host .cmv-toggle.on {
+  background: rgba(47, 129, 247, 0.22);
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+}
+
+/* prev / next / close icon buttons */
+.cm6-host .cmv-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.cm6-host .cmv-icon:hover {
+  background: var(--color-btn-secondary-hover);
+  color: var(--color-text-primary);
+}
+
+/* text buttons (replace, all) */
+.cm6-host .cmv-btn {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  background: var(--color-btn-secondary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-btn-secondary-border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.cm6-host .cmv-btn:hover {
+  background: var(--color-btn-secondary-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
+}
+
+/* close button pinned top-right with breathing room on every side */
+.cm6-host .cmv-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 18px;
+}
+
+/* match highlights: all matches faint, the active one accented */
+.cm6-host .cm-searchMatch {
+  background: rgba(234, 179, 8, 0.20);
+  outline: 1px solid rgba(234, 179, 8, 0.38);
+  border-radius: 2px;
+}
+.cm6-host .cm-searchMatch-selected {
+  background: rgba(47, 129, 247, 0.42);
+  outline: 1px solid var(--color-accent-hover);
+}
