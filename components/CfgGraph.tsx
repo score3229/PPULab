@@ -178,7 +178,8 @@ function sizeBlock(b: CfgBlock) {
   const headerLen = (b.header?.length || 6) + 8;
   const maxBody = b.lines.reduce((m, l) => Math.max(m, (l.text || "").length), 0);
   const cols = Math.max(headerLen, maxBody, 8);
-  const w = clamp(Math.round(cols * 6.6) + 22, 190, 560);
+  // grow to fit the widest line so nothing clips
+  const w = clamp(Math.round(cols * 6.6) + 22, 190, 1100);
   const shown = Math.min(b.lines.length, 18) + (b.lines.length > 18 ? 1 : 0);
   const h = 24 + shown * 17 + 8;
   return { w, h };

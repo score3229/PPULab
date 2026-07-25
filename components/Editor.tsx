@@ -23,6 +23,8 @@ import {
   hoverTooltip,
   gutterLineClass,
   GutterMarker,
+  rectangularSelection,
+  crosshairCursor,
 } from "@codemirror/view";
 import type { DecorationSet, Panel } from "@codemirror/view";
 import {
@@ -1003,6 +1005,9 @@ const PPUEditor = forwardRef<EditorHandle, EditorProps>(function PPUEditor(
       // find/replace widget floats at the top like vs code, custom panel
       search({ top: true, createPanel: makeSearchPanel }),
       highlightSelectionMatches(),
+      // alt+drag for a vertical column selection, vs code style
+      rectangularSelection(),
+      crosshairCursor(),
       oneDarkTheme,
       ppuAsmLanguage,
       syntaxHighlighting(ppuAsmHighlightStyle),

@@ -67,10 +67,17 @@ function isLabelOnly(line: string): boolean {
 }
 
 function parseAddressValue(s: string): number | null {
-  const t = s.trim();
-  if (/^0x[0-9a-fA-F]+$/.test(t)) return parseInt(t, 16) >>> 0;
-  if (/^\d+$/.test(t)) return parseInt(t, 10) >>> 0;
-  return null;
+  // leading number only, ignoring a trailing name from `address <addr> <name>`
+  const m = s.trim().match(/^(0x[0-9a-fA-F]+|\d+)/);
+  if (!m) return null;
+  const t = m[1];
+  return (/^0x/i.test(t) ? parseInt(t, 16) : parseInt(t, 10)) >>> 0;
+}
+
+// the trailing name from `address <addr> <name>`, so the block gets labeled
+function addressLineName(s: string): string | undefined {
+  const m = s.trim().match(/^(?:0x[0-9a-fA-F]+|\d+)\s+([A-Za-z_.$][\w.$]*)/);
+  return m ? m[1] : undefined;
 }
 
 function getEmittedWordCountForLine(line: string): number {
@@ -120,6 +127,9 @@ function mapWordsToBlocks(asmText: string, words: number[]): Block[] {
         curAddr = v >>> 0;
         block = null;
         expectedNext = null;
+        // inline func name lands here, use it to label the block
+        const nm = addressLineName(mAddr[1]);
+        if (nm) pendingName = nm;
       }
       continue;
     }
